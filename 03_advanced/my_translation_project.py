@@ -11,7 +11,7 @@ class BioMolecule(object):
     @type mass: float
     """
     def __init__(self, id, name, mass=0.):
-        self._id = id
+        self.id = id
         self.name = name
         self.mass = mass
 
@@ -64,18 +64,19 @@ class Polymer(BioMolecule):
     """
     def __init__(self, id, name, sequence, mass=0.):
         # 3. Initialize the parent class correctly
-        self._sequence = sequence
+        super().__init__(id, name, mass)
+        self.sequence = sequence
 
     @property
     def sequence(self):
         print("getter")
-        return self.__sequence
+        return self._sequence
     @sequence.setter
     def sequence(self, value):
         print("setter")
         if not isinstance(value,str):
             raise TypeError("sequence must be String")
-        self.__sequence = value
+        self._sequence = value
     
     # 4. Write getter and setter for sequence, again check for type
     # 5. run in ipython, instantiate this class, and test it
@@ -96,13 +97,23 @@ class Polymer(BioMolecule):
 class MRNA(Polymer):
     def __init__(self, id, name, sequence, mass=0.):
         # 6. Initialize the parent class correctly
-
+        super().__init__(id, name, sequence, mass)
         # 7. Create a list that stores if a ribosome is bound for each
         # codon (triplet).
         self.binding = [] # use this attribute for 7.
 
     def calculate_mass(self):
         NA_mass = {'A': 1.0, 'U': 2.2, 'G':2.1, 'C':1.3}
+        Masse = 0
+        # for i in range(len(self.sequence)):
+        #     Masse += NA_mass[self.sequence[i]]
+        # print(Masse)
+        # return Masse
+        for i in self.sequence:
+            Masse += NA_mass[i]
+        print(Masse)
+        return Masse
+
         # 8. calculate the mass for the whole sequence
 
 class Protein(Polymer):
@@ -126,15 +137,20 @@ class Protein(Polymer):
         self.__class__.number_of_proteins += 1 #  increase instance counter
         self.mass = self.calculate_mass()
 
+    def __add__(self, s):
+        self._sequence = self.sequence + s 
+
     # 9. implement the elongation feature described in the docstring. (__add__)
 
     def calculate_mass(self):
+        Masse = 0
         AA_mass = {"A": 89.0929, "R": 175.208, "N": 132.118, "D": 132.094, "C": 121.158, "Q": 146.144,
                     "E": 146.121, "G": 75.0664, "H":155.154, "I":131.172, "L": 131.172, "K": 147.195,
                     "M": 149.211, "F": 165.189, "P": 115.13, "S": 105.092, "T": 119.119, "W": 204.225,
                     "Y":181.188, "V":117.146}
         for aa in self.sequence:
-            self.mass += AA_mass[aa]
+            Masse += AA_mass[aa]
+        return Masse
    
 
 class Ribosome(BioMolecule):
@@ -182,9 +198,9 @@ class Ribosome(BioMolecule):
                                                     # mrna still free
                                                     # at pos 0
             self.bound_mrna = mrna
-            self.nascent_prot = None  # 10. Instantiate a new Protein
+            self.nascent_prot = Protein(mrna.id, mrna.name, "")  # 10. Instantiate a new Protein
             self.position = 0
-            self.bound_mrna.binding  # 11. Mark position 0 of MRNA to be bound by ribosome
+            self.bound_mrna.binding.append(0)  # 11. Mark position 0 of MRNA to be bound by ribosome
             
     def elongate(self):
         """Elongate the new protein by the correct amino acid. Check if an
@@ -194,6 +210,7 @@ class Ribosome(BioMolecule):
         @type return: Protein or False
         """
         if not self.bound_mrna: # can't elongate because there is no MRNA
+
             return False
 
         # 12. Implement the described features.
