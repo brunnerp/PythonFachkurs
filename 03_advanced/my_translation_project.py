@@ -100,7 +100,9 @@ class MRNA(Polymer):
         super().__init__(id, name, sequence, mass)
         # 7. Create a list that stores if a ribosome is bound for each
         # codon (triplet).
-        self.binding = [] # use this attribute for 7.
+        self.binding = []
+        for i in range(0, len(sequence)):
+            self.binding.append(0) # use this attribute for 7.
 
     def calculate_mass(self):
         NA_mass = {'A': 1.0, 'U': 2.2, 'G':2.1, 'C':1.3}
@@ -135,7 +137,7 @@ class Protein(Polymer):
     def __init__(self, id, name, sequence, mass=0.):
         super().__init__(id, name, sequence, mass)
         self.__class__.number_of_proteins += 1 #  increase instance counter
-        self.mass = self.calculate_mass()
+        mass = self.calculate_mass()
 
     def __add__(self, s):
         self._sequence = self.sequence + s 
@@ -200,7 +202,7 @@ class Ribosome(BioMolecule):
             self.bound_mrna = mrna
             self.nascent_prot = Protein(mrna.id, mrna.name, "")  # 10. Instantiate a new Protein
             self.position = 0
-            self.bound_mrna.binding.append(0)  # 11. Mark position 0 of MRNA to be bound by ribosome
+            mrna.binding[0]=1    # 11. Mark position 0 of MRNA to be bound by ribosome
             
     def elongate(self):
         """Elongate the new protein by the correct amino acid. Check if an
@@ -209,10 +211,19 @@ class Ribosome(BioMolecule):
 
         @type return: Protein or False
         """
-        if not self.bound_mrna: # can't elongate because there is no MRNA
+        if not self.bound_mrna : # can't elongate because there is no MRNA
 
             return False
 
+        j=self.position
+        for i in range(0, len(self.bound_mrna.sequence)):
+        	if self.bound_mrna.binding[i] and not self.bound_mrna.binding[i+3]:
+
+        		self.nascent_prot.sequence += self.code[self.bound_mrna.sequence[i:i+3]]
+        		self.bound_mrna.binding[i]=0
+        		self.bound_mrna.binding[i+3]=1
+        		j+=3
+        	return self.nascent_prot
         # 12. Implement the described features.
 
     def terminate(self):
